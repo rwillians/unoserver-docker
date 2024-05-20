@@ -1,0 +1,42 @@
+#! /usr/bin/env sh
+
+source "$(dirname "${0}")/utils.sh"
+
+#
+#   YOU CAN RUN THIS SCRIPT IN EITHER AN ARM64 OR AN AMD64 MACHINE
+#
+
+VERSION=${1}
+COMMIT_SHA=${COMMIT_SHA:-$(git rev-parse HEAD)}
+
+if [ -z "${COMMIT_SHA}" ]; then
+  echo ""
+  echo "It looks like you're not within a git repository."
+  echo ""
+  echo "    " $(important "Make sure you're at this project's")
+  echo "    " $(important "root directory.")
+  echo ""
+fi
+
+if [ -z "${VERSION}" ]; then
+  echo ""
+  echo $(important "You must pass the release version as argument")
+  echo ""
+  echo $(muted "Like this:")
+  echo ""
+  echo "    " $(muted ".scripts/build-push-merged-image") $(bold "0.2.5")
+  echo ""
+
+  exit 1
+fi
+
+echo $(muted "Merging build images for version") $(bold "${VERSION}")
+sleep 2
+
+docker buildx imagetools create \
+  -t "ghcr.io/stanfordtax/unoserver:latest" \
+  -t "ghcr.io/stanfordtax/unoserver:${VERSION}" \
+  -t "ghcr.io/stanfordtax/unoserver:${COMMIT_SHA}" \
+  "ghcr.io/stanfordtax/unoserver:${VERSION}-arm64" \
+  "ghcr.io/stanfordtax/unoserver:${VERSION}-aarch64" \
+  "ghcr.io/stanfordtax/unoserver:${VERSION}-amd64"

@@ -1,0 +1,42 @@
+#! /usr/bin/env sh
+
+source "$(dirname "${0}")/utils.sh"
+
+#
+#   YOU SHOULD RUN THIS SCRIPT IN AN AMD64 MACHINE
+#
+
+VERSION=${1}
+COMMIT_SHA=${COMMIT_SHA:-$(git rev-parse HEAD)}
+
+if [ -z "${COMMIT_SHA}" ]; then
+  echo ""
+  echo "It looks like you're not in a git repository."
+  echo ""
+  echo "    " $(important "Make sure you're at this project's")
+  echo "    " $(important "root directory.")
+  echo ""
+fi
+
+if [ -z "${VERSION}" ]; then
+  echo ""
+  echo $(important "You must pass the release version as argument")
+  echo ""
+  echo $(muted "Like this:")
+  echo ""
+  echo "    " $(muted ".scripts/build-push-x86-x64") $(bold "0.2.5")
+  echo ""
+
+  exit 1
+fi
+
+echo $(muted "Building AMD64 image with version") $(bold "${VERSION}")
+sleep 2
+
+docker --context=default buildx build \
+  --build-arg "BUILDPLATFORM=amd64" \
+  -t "ghcr.io/stanfordtax/unoserver:${VERSION}-amd64" \
+  -t "ghcr.io/stanfordtax/unoserver:${COMMIT_SHA}-amd64" \
+  --builder default \
+  --platform linux/amd64 \
+  --push .

@@ -40,6 +40,6 @@ else
     if [[ $# -gt 0 ]]; then
         eval "$@"
     else
-        /bin/bash
+        /bin/sh
     fi
 fi

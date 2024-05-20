@@ -1,0 +1,50 @@
+#! /usr/bin/env sh
+
+source "$(dirname "${0}")/utils.sh"
+
+#
+#   YOU SHOULD RUN THIS SCRIPT IN AN ARM64 MACHINE
+#
+
+VERSION=${1}
+COMMIT_SHA=${COMMIT_SHA:-$(git rev-parse HEAD)}
+
+if [ -z "${COMMIT_SHA}" ]; then
+  echo ""
+  echo "It looks like you're not within a git repository."
+  echo ""
+  echo "    " $(important "Make sure you're at this project's")
+  echo "    " $(important "root directory.")
+  echo ""
+fi
+
+if [ -z "${VERSION}" ]; then
+  echo ""
+  echo $(important "You must pass the release version as argument")
+  echo ""
+  echo $(muted "Like this:")
+  echo ""
+  echo "    " $(muted ".scripts/build-push-arm64") $(bold "0.2.5")
+  echo ""
+
+  exit 1
+fi
+
+echo $(muted "Building ARM64 image with version") $(bold "${VERSION}")
+sleep 2
+
+docker --context=default buildx build \
+  --build-arg "BUILDPLATFORM=arm64" \
+  -t "ghcr.io/stanfordtax/unoserver:${VERSION}-arm64" \
+  -t "ghcr.io/stanfordtax/unoserver:${COMMIT_SHA}-arm64" \
+  --builder default \
+  --platform linux/arm64/v8 \
+  --push .
+
+docker --context=default buildx build \
+  --build-arg "BUILDPLATFORM=aarch64" \
+  -t "ghcr.io/stanfordtax/unoserver:${VERSION}-aarch64" \
+  -t "ghcr.io/stanfordtax/unoserver:${COMMIT_SHA}-aarch64" \
+  --builder default \
+  --platform linux/aarch64 \
+  --push .
